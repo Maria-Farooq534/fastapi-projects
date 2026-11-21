@@ -1,0 +1,6 @@
+fastapi[standard]
+streamlit
+requests
+pandas
+scikit-learn
+pydantic

@@ -1,11 +1,12 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, computed_field
 from typing import Literal, Annotated
 import pickle
 import json
 import pandas as pd
 
-with open("model.pkl" , "rb") as file:
+with open("02_fastapi_model/model.pkl" , "rb") as file:
     model = pickle.load(file)
     
 
@@ -36,7 +37,7 @@ class UserInput(BaseModel):
     @computed_field
     @property
     def bmi(self) -> float:
-        return round(self.height /(self.weight ** 2),2)
+        return round(self.weight /(self.height ** 2),2)
     
     @computed_field
     @property
@@ -57,7 +58,7 @@ class UserInput(BaseModel):
         elif self.age < 45:
             return "adult"
         elif self.age < 60:
-            return "middle age"
+            return "middle_age"
         return "senior"
     
     
@@ -71,7 +72,19 @@ class UserInput(BaseModel):
         return 3
     
 
-# @app.post("/predict")
-# def predict(input_data):
+@app.post("/predict")
+def predict_premium(data: UserInput):
+    input_df = pd.DataFrame([
+        {
+            'bmi': data.bmi,
+            'age_group': data.age_group,
+            'lifestyle_risk': data.lifestyle_risk,
+            'city_tier': data.city_tier,
+            'income_lpa': data.income_lpa,
+            'occupation': data.occupation
+        }
+    ])
     
-#     pd.DataFrame()
+    prediction = model.predict(input_df)[0]
+    
+    return JSONResponse(status_code=200, content={'predicted_category': prediction})
